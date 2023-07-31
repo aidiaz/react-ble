@@ -1,0 +1,40 @@
+.device-page {
+    position: flex;
+    width: 100%;
+    max-width: 100%;
+    justify-content: center;
+    height: 100%;
+    
+}
+
+.title-heading {
+    /* Center vertically and horizontally */
+    position: relative;
+    justify-content: center;
+    color: #f8f5f5;
+    text-align: center;
+    top: 5vh;
+}
+
+.data-graph-container {
+    position: relative;
+    justify-content: center;
+}
+
+.accordion-table-container {
+    position: relative;
+    width: 100vh;
+    max-width: 100vh;
+    justify-content: center;
+}
+
+.device-table-container {
+    position: relative;
+    width: 40vh;
+    justify-content: center;
+    text-align: center;
+}
+
+td:nth-child(1) {
+    font-style: italic;
+}

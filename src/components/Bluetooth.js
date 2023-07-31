@@ -1,14 +1,16 @@
+import {Button, Container} from 'react-bootstrap';
+import './Bluetooth.css'
+
 function Bluetooth({ setDevice, setCharacteristic, setServer, setService }) {
 
-    
     const connectToDevice = async () => {
         const device = await navigator.bluetooth
-        .requestDevice({
-            filters: [
-                { name: "ESP_32" },
-                { services: [0x00FF] },
-            ]
-        })
+            .requestDevice({
+                filters: [
+                    { name: "ESP_32" },
+                    { services: [0x00FF] },
+                ]
+            })
         setDevice(device)
         const server = await device.gatt.connect()
         console.log("device connected")
@@ -19,7 +21,15 @@ function Bluetooth({ setDevice, setCharacteristic, setServer, setService }) {
         const characteristic = await service.getCharacteristic(0xFF01)
         console.log("characteristics set")
         setCharacteristic(characteristic)
+
+        characteristic.addEventListener('oncharacteristicvaluechanged', onDataChange)
         device.addEventListener('gattserverdisconnected', onDisconnected)
+
+    }
+
+    const onDataChange = (event) => {
+        console.log("New data!")
+
     }
 
     const onDisconnected = (event) => {
@@ -30,7 +40,9 @@ function Bluetooth({ setDevice, setCharacteristic, setServer, setService }) {
 
     return (
         <>
-        <button className="bluetooth" onClick={connectToDevice}>CONNECT</button>
+            <Container fluid className="connect-button">
+                    <Button variant="primary" size="xxl" onClick={connectToDevice}>Connect Device</Button>{' '}
+            </Container>
         </>
     )
 
