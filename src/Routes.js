@@ -11,8 +11,8 @@ export const PageRoutes = () => {
     const [server, setServer] = useState('');
     const [service, setService] = useState('');
     const [data, setData] = useState([]);
-    
-    
+
+
 
     const readDataPeriodically = async () => {
         try {
@@ -22,10 +22,12 @@ export const PageRoutes = () => {
                 // Assuming the received value is a DataView
                 const dataView = new DataView(value.buffer);
                 const uint32Value = dataView.getUint32(0, true); // Assuming little-endian encoding
+
                 var dict = {
-                    name: tick++,
-                    value: uint32Value,
-                  };
+                    name: "",
+                    value: (uint32Value - 2147483648) * 180 / 2147483648,
+
+                };
                 setData(dict);
             }
 
