@@ -1,26 +1,55 @@
 import { useState, useEffect } from 'react';
-import { Accordion, Container, Row, Col, Table } from 'react-bootstrap';
+import { Accordion, Container, Table } from 'react-bootstrap';
 import {
   Line,
   LineChart,
   XAxis,
   YAxis,
+  Legend,
   ResponsiveContainer
 } from 'recharts';
 
 import './DevicePage.css'
 
 
-export function DevicePage({ device, characteristic, server, service, data }) {
-  const [chartData, setchartData] = useState([])
-  useEffect(() => {
+export function DevicePage({ device }) {
 
-    setchartData(currentData => [...currentData, data]);
-    if (chartData.length > 1000) {
+  const [data, setData] = useState([]);
+
+  const readDataPeriodically = async () => {
+    try {
+      if (server.connected === true) {
+        // Assuming device, service, and characteristic are already set up
+        const value = await characteristic.readValue();
+        // Assuming the received value is a DataView
+        const dataView = new DataView(value.buffer);
+        const uint32Value = dataView.getUint32(0, true); // Assuming little-endian encoding
+
+        var dict = {
+          name: "",
+          value: (uint32Value - 2147483648) * 180 / 2147483648,
+
+        };
+        setData(dict);
+      }
+
+    } catch (error) {
+      console.error('Error reading data from BLE device:', error);
+    }
+  };
+
+  // Start reading data every 5 seconds (adjust the interval as needed)
+  useEffect(() => {
+    const intervalId = setInterval(readDataPeriodically, 1);
+    if (chartData.length > 500) {
       chartData.shift()
     }
-  });
+    setchartData(currentData => [...currentData, data]);
 
+    return () => {
+      clearInterval(intervalId);
+    };
+  });
 
   return (
     <>
@@ -40,7 +69,10 @@ export function DevicePage({ device, characteristic, server, service, data }) {
           >
             <XAxis dataKey="name" stroke="white" />
             <YAxis stroke="white" />
-            <Line type="monotone" dataKey="value" stroke="#82ca9d" />
+            <Legend />
+            <Line type="monotone" dataKey="pitch" stroke="#8884d8" />
+            <Line type="monotone" dataKey="roll" stroke="#82ca9d" />
+            <Line type="monotone" dataKey="yaw" stroke="#ffc658" />
           </LineChart>
         </ResponsiveContainer>
         <Container className='accordion-table-container'>
@@ -53,19 +85,11 @@ export function DevicePage({ device, characteristic, server, service, data }) {
                     <tbody>
                       <tr>
                         <td>Device Name</td>
-                        <td>{device.name}</td>
-                      </tr>
-                      <tr>
-                        <td>Characteristic UUID</td>
-                        <td>{characteristic.uuid}</td>
+                        <td>{device[0].name}</td>
                       </tr>
                       <tr>
                         <td>Server connection</td>
-                        <td>{server.connected?.toString() || ''}</td>
-                      </tr>
-                      <tr>
-                        <td>Primary service</td>
-                        <td>{service.isPrimary?.toString() || ''}</td>
+                        <td>{device[0].server.connected?.toString() || ''}</td>
                       </tr>
                     </tbody>
                   </Table>
