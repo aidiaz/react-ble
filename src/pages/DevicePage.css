@@ -4,7 +4,7 @@
     max-width: 100%;
     justify-content: center;
     height: 100%;
-    
+
 }
 
 .title-heading {
@@ -37,4 +37,9 @@
 
 td:nth-child(1) {
     font-style: italic;
+}
+
+.navbar {
+    left: 0px;
+    right: 0px;
 }

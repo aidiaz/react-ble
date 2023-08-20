@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Accordion, Container, Table } from 'react-bootstrap';
+import { Canvas } from "@react-three/fiber";
+import Cube from "../components/Cube.js";
+import { Container, Navbar, Nav, NavDropdown } from 'react-bootstrap';
 import {
   Line,
   LineChart,
@@ -11,55 +13,85 @@ import {
 
 import './DevicePage.css'
 
+export function DevicePage({ data, rawData }) {
 
-export function DevicePage({ device }) {
-
-  const [data, setData] = useState([]);
-
-  const readDataPeriodically = async () => {
-    try {
-      if (server.connected === true) {
-        // Assuming device, service, and characteristic are already set up
-        const value = await characteristic.readValue();
-        // Assuming the received value is a DataView
-        const dataView = new DataView(value.buffer);
-        const uint32Value = dataView.getUint32(0, true); // Assuming little-endian encoding
-
-        var dict = {
-          name: "",
-          value: (uint32Value - 2147483648) * 180 / 2147483648,
-
-        };
-        setData(dict);
-      }
-
-    } catch (error) {
-      console.error('Error reading data from BLE device:', error);
-    }
-  };
-
-  // Start reading data every 5 seconds (adjust the interval as needed)
+  const [chartData, setChartData] = useState([]);
+  const [chartRawData, setChartRawData] = useState([]);
+  const [actualChart, setActualChart] = useState([chartData]);
+  const [actualXAxis, setActualXAxis] = useState(["pitch", "roll", "yaw"]);
+  const [dataBool, setDataBool] = useState(0);
   useEffect(() => {
-    const intervalId = setInterval(readDataPeriodically, 1);
-    if (chartData.length > 500) {
-      chartData.shift()
-    }
-    setchartData(currentData => [...currentData, data]);
+
+    const updateInterval = setInterval(() => {
+      if (chartData.length > 50 || chartRawData.length > 50) {
+        chartData.shift()
+        chartRawData.shift()
+      }
+      setChartData(oldData => [...oldData, data])
+      setChartRawData(oldRawData => [...oldRawData, rawData])
+      if (dataBool === 1) {
+        setActualChart(chartData)
+      }
+      else {
+        setActualChart(chartRawData)
+      }
+    }, 1);
 
     return () => {
-      clearInterval(intervalId);
+      clearInterval(updateInterval);
     };
   });
 
+  function setCurrentChart(event) {
+    if (event === "angles") {
+      setDataBool(1);
+      setActualXAxis(["pitch", "roll", "yaw"]);
+    }
+    if (event === "accel") {
+      setDataBool(0);
+      setActualXAxis(["accel_x", "accel_y", "accel_z"]);
+    }
+    if (event === "gyro") {
+      setDataBool(0);
+      setActualXAxis(["gyro_x", "gyro_y", "gyro_z"]);
+    }
+    if (event === "mag") {
+      setDataBool(0);
+      setActualXAxis(["mag_x", "mag_y", "mag_z"]);
+    }
+
+  }
   return (
     <>
       <Container fluid className="device-page">
-        <Container className='title-heading'><h1>BLE Grapher</h1></Container>
+        <Navbar expand="lg" className="bg-body-tertiary">
+          <Container>
+            <Navbar.Brand href="/#/">IMU Visualizer</Navbar.Brand>
+            <Navbar.Toggle aria-controls="basic-navbar-nav" />
+            <Navbar.Collapse id="basic-navbar-nav">
+              <Nav className="me-auto" onSelect={(eventKey) => setCurrentChart(eventKey)} >
+                <NavDropdown title="Graphs" id="basic-nav-dropdown">
+                  <NavDropdown.Item eventKey="angles" href="#angles">Euler Angles</NavDropdown.Item>
+                  <NavDropdown.Item eventKey="accel" href="#accel">Raw Accelerometer</NavDropdown.Item>
+                  <NavDropdown.Item eventKey="gyro" href="#gyro">Raw Gyroscope</NavDropdown.Item>
+                  <NavDropdown.Item eventKey="mag" href="#mag"> Raw Magnetometer</NavDropdown.Item>
+                </NavDropdown>
+              </Nav>
+            </Navbar.Collapse>
+          </Container>
+        </Navbar>
+
+        <Canvas dpr={window.devicePixelRatio}>
+          <color attach="background" args={["#212529"]} />
+          <ambientLight />
+          <pointLight position={[10, 10, 10]} />
+          <Cube angles={data} position={[0, 0, 0]} />
+        </Canvas>
         <ResponsiveContainer fluid className="data-graph-container" width="100%" height="80%">
           <LineChart
             width={700}
             height={300}
-            data={chartData}
+            data={actualChart}
             margin={{
               top: 60,
               right: 200,
@@ -69,41 +101,14 @@ export function DevicePage({ device }) {
           >
             <XAxis dataKey="name" stroke="white" />
             <YAxis stroke="white" />
+            <Line type="monotone" isAnimationActive={false} dot={false} dataKey={actualXAxis[0]} stroke="#82ca9d" />
+            <Line type="monotone" isAnimationActive={false} dot={false} dataKey={actualXAxis[1]} stroke="#8884d8" />
+            <Line type="monotone" isAnimationActive={false} dot={false} dataKey={actualXAxis[2]} stroke="#ffc658" />
             <Legend />
-            <Line type="monotone" dataKey="pitch" stroke="#8884d8" />
-            <Line type="monotone" dataKey="roll" stroke="#82ca9d" />
-            <Line type="monotone" dataKey="yaw" stroke="#ffc658" />
           </LineChart>
-        </ResponsiveContainer>
-        <Container className='accordion-table-container'>
-          <Accordion>
-            <Accordion.Item eventKey="0">
-              <Accordion.Header>Device information</Accordion.Header>
-              <Accordion.Body>
-                <Container fluid className="device-table-container">
-                  <Table bordered size='sm'>
-                    <tbody>
-                      <tr>
-                        <td>Device Name</td>
-                        <td>{device[0].name}</td>
-                      </tr>
-                      <tr>
-                        <td>Server connection</td>
-                        <td>{device[0].server.connected?.toString() || ''}</td>
-                      </tr>
-                    </tbody>
-                  </Table>
-                </Container>
-              </Accordion.Body>
-            </Accordion.Item>
-          </Accordion>
-
-        </Container>
-
+        </ResponsiveContainer >
       </Container >
-
     </>
-
   );
 }
 
