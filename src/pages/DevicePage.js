@@ -20,22 +20,23 @@ export function DevicePage({ data, rawData }) {
   const [actualChart, setActualChart] = useState([chartData]);
   const [actualXAxis, setActualXAxis] = useState(["pitch", "roll", "yaw"]);
   const [dataBool, setDataBool] = useState(0);
+  const [showCube, setCube] = useState(true);
   useEffect(() => {
 
     const updateInterval = setInterval(() => {
-      if (chartData.length > 50 || chartRawData.length > 50) {
+      if (chartData.length > 150 || chartRawData.length > 150) {
         chartData.shift()
         chartRawData.shift()
       }
-      setChartData(oldData => [...oldData, data])
-      setChartRawData(oldRawData => [...oldRawData, rawData])
       if (dataBool === 1) {
         setActualChart(chartData)
       }
       else {
         setActualChart(chartRawData)
       }
-    }, 1);
+      setChartData(oldData => [...oldData, data])
+      setChartRawData(oldRawData => [...oldRawData, rawData])
+    });
 
     return () => {
       clearInterval(updateInterval);
@@ -44,50 +45,58 @@ export function DevicePage({ data, rawData }) {
 
   function setCurrentChart(event) {
     if (event === "angles") {
+      setCube(false);
       setDataBool(1);
       setActualXAxis(["pitch", "roll", "yaw"]);
     }
     if (event === "accel") {
+      setCube(false);
       setDataBool(0);
       setActualXAxis(["accel_x", "accel_y", "accel_z"]);
     }
     if (event === "gyro") {
+      setCube(false);
       setDataBool(0);
       setActualXAxis(["gyro_x", "gyro_y", "gyro_z"]);
     }
     if (event === "mag") {
+      setCube(false);
       setDataBool(0);
       setActualXAxis(["mag_x", "mag_y", "mag_z"]);
+    }
+    if (event === "cube") {
+      setCube(true);
     }
 
   }
   return (
     <>
       <Container fluid className="device-page">
-        <Navbar expand="lg" className="bg-body-tertiary">
-          <Container>
-            <Navbar.Brand href="/#/">IMU Visualizer</Navbar.Brand>
-            <Navbar.Toggle aria-controls="basic-navbar-nav" />
-            <Navbar.Collapse id="basic-navbar-nav">
-              <Nav className="me-auto" onSelect={(eventKey) => setCurrentChart(eventKey)} >
-                <NavDropdown title="Graphs" id="basic-nav-dropdown">
-                  <NavDropdown.Item eventKey="angles" href="#angles">Euler Angles</NavDropdown.Item>
-                  <NavDropdown.Item eventKey="accel" href="#accel">Raw Accelerometer</NavDropdown.Item>
-                  <NavDropdown.Item eventKey="gyro" href="#gyro">Raw Gyroscope</NavDropdown.Item>
-                  <NavDropdown.Item eventKey="mag" href="#mag"> Raw Magnetometer</NavDropdown.Item>
-                </NavDropdown>
-              </Nav>
-            </Navbar.Collapse>
-          </Container>
+        <Navbar className="bg-body-tertiary">
+          <Navbar.Brand href="/#/">IMU Visualizer</Navbar.Brand>
+          <Navbar.Toggle aria-controls="basic-navbar-nav" />
+          <Navbar.Collapse id="basic-navbar-nav">
+            <Nav className='navbar' onSelect={(eventKey) => setCurrentChart(eventKey)} >
+              <NavDropdown title="Graphs" id="basic-nav-dropdown">
+                <NavDropdown.Item eventKey="cube" href="#cube">3D Cube</NavDropdown.Item>
+                <NavDropdown.Item eventKey="angles" href="#angles">Euler Angles</NavDropdown.Item>
+                <NavDropdown.Item eventKey="accel" href="#accel">Raw Accelerometer</NavDropdown.Item>
+                <NavDropdown.Item eventKey="gyro" href="#gyro">Raw Gyroscope</NavDropdown.Item>
+                <NavDropdown.Item eventKey="mag" href="#mag"> Raw Magnetometer</NavDropdown.Item>
+
+              </NavDropdown>
+            </Nav>
+          </Navbar.Collapse>
         </Navbar>
 
-        <Canvas dpr={window.devicePixelRatio}>
+        {showCube && <Canvas dpr={window.devicePixelRatio}>
           <color attach="background" args={["#212529"]} />
           <ambientLight />
           <pointLight position={[10, 10, 10]} />
           <Cube angles={data} position={[0, 0, 0]} />
-        </Canvas>
-        <ResponsiveContainer fluid className="data-graph-container" width="100%" height="80%">
+        </Canvas>}
+
+        {!showCube && <ResponsiveContainer fluid className="data-graph-container" width="100%" height="80%">
           <LineChart
             width={700}
             height={300}
@@ -106,7 +115,7 @@ export function DevicePage({ data, rawData }) {
             <Line type="monotone" isAnimationActive={false} dot={false} dataKey={actualXAxis[2]} stroke="#ffc658" />
             <Legend />
           </LineChart>
-        </ResponsiveContainer >
+        </ResponsiveContainer >}
       </Container >
     </>
   );
