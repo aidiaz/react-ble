@@ -10,12 +10,12 @@ function Bluetooth({ setCharacteristics, setData, setRawData }) {
                 filters: [
                     { name: "nimble-ble" },
                 ],
-                optionalServices: ['b2bbc642-46da-11ed-b878-0242ac120002'],
+                optionalServices: ['0723c127-73fa-4b28-ad7a-5377218cd569'],
             })
         ble_request.addEventListener('gattserverdisconnected', onDisconnected);
         const server = await ble_request.gatt.connect()
-        const services = await server.getPrimaryService('b2bbc642-46da-11ed-b878-0242ac120002')
-        const characteristics = await services.getCharacteristic('c9af9c76-46de-11ed-b878-0242ac120002')
+        const services = await server.getPrimaryService('0723c127-73fa-4b28-ad7a-5377218cd569')
+        const characteristics = await services.getCharacteristic('567a4ff5-da5b-454e-b0eb-1edfcfd120a4')
         characteristics.startNotifications()
         characteristics.addEventListener('characteristicvaluechanged', onDataChange);
         setCharacteristics(old_ble_characteristics => ([...old_ble_characteristics, characteristics]))
