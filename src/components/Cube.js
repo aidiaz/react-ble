@@ -6,9 +6,9 @@ export default function Cube({angles, ...props }) {
   const mesh = useRef();
   // rotate the box
   useFrame((state, delta) => {
-    mesh.current.rotation.x = -angles.pitch*3.1415/180 + 3.1415/2;
-    mesh.current.rotation.y = -angles.roll*3.1415/180;
-    mesh.current.rotation.z = -angles.yaw*3.1415/180;
+    mesh.current.rotation.x = -angles.pitch;
+    mesh.current.rotation.y = angles.yaw;
+    mesh.current.rotation.z = -angles.roll;
   });
   // draw the box
   return (
